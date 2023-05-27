@@ -34,10 +34,10 @@
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">Best-README-Template</h3>
+  <h3 align="center">go-notetakingapp</h3>
 
   <p align="center">
-    An awesome README template to jumpstart your projects!
+    Currently using a placeholder name for the project. An old idea from when I first started learning how to code.
     <br />
     <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
     <br />
@@ -84,6 +84,10 @@
 ## About The Project
 
 [![Product Name Screen Shot][product-screenshot]](https://example.com)
+
+* Old note taking project that was abandoned short after learning how to code (due to incompetence in using Java)
+* Retrying with Go as a CLI project, with a Web UI maybe (for testing and trying something new)
+* Might try using SQLite or MySQL as a DB
 
 There are many great README templates available on GitHub; however, I didn't find one that really suited my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
 
