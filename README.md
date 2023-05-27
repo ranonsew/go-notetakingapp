@@ -108,6 +108,7 @@ Use the `BLANK_README.md` to get started.
 
 This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
 
+<!-- ! == image, [next] == alt-text, [Next.js] is an img defined below, [Next-url] is a shorthand link defined below -->
 * [![Next][Next.js]][Next-url]
 * [![React][React.js]][React-url]
 * [![Vue][Vue.js]][Vue-url]
@@ -130,6 +131,7 @@ To get a local copy up and running follow these simple example steps.
 ### Prerequisites
 
 This is an example of how to list things you need to use the software and how to install them.
+* Go version >1.14.0 required
 * npm
   ```sh
   npm install npm@latest -g
@@ -142,10 +144,11 @@ _Below is an example of how you can instruct your audience on installing and set
 1. Get a free API Key at [https://example.com](https://example.com)
 2. Clone the repo
    ```sh
-   git clone https://github.com/your_username_/Project-Name.git
+   git clone https://github.com/ranonsew/go-notetakingapp.git
    ```
-3. Install NPM packages
+3. Install NPM packages & Go dependencies
    ```sh
+   go mod tidy
    npm install
    ```
 4. Enter your API in `config.js`
