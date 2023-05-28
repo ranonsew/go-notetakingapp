@@ -7,21 +7,26 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/ranonsew/go-notetakingapp/functions"
+	"github.com/ranonsew/go-notetakingapp/db"
+
 	"github.com/spf13/cobra"
 )
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Lists out all the saved notes",
+	Long: `All the notes that are saved within the sqlite database
+	are displayed in the form of a list of notes, 
+	in which the user can then select.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("list called")
+
+		functions.PromptGetSelect(functions.PromptContent{
+			ErrorMsg: "A note must be selected to continue.",
+			Label: "Select a note to continue",
+		}, db.ListNotes())
 	},
 }
 

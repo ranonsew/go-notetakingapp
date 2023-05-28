@@ -3,20 +3,23 @@ package db
 import (
 	"database/sql"
 	"log"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type Note struct {
-	id int
-	content string
+	Id int `sql:"id"`
+	Name string `sql:"name"`
+	Content string `sql:"content"`
+	LastUpdated time.Time `sql:"last_updated"`
 }
 
 var db *sql.DB // pointer to sql db instance
 
 func Open() error {
 	var err error // to ensure we use the above "db" (not creating new)
-	db, err = sql.Open("sqlite3", "./sqlite-notetakingapp-data.db")
+	db, err = sql.Open("sqlite3", "./data/sqlite-notetakingapp.db")
 	if err != nil {
 		return err
 	}
@@ -27,7 +30,9 @@ func Open() error {
 func CreateTable() {
 	query := `CREATE TABLE IF NOT EXISTS notes (
 		id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-		content TEXT
+		name TEXT,
+		content TEXT,
+		last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	statement, err := db.Prepare(query)
@@ -37,10 +42,11 @@ func CreateTable() {
 	defer statement.Close()
 
 	statement.Exec()
-	log.Println("mynotes table created")
+	log.Println("'notes' table created")
 }
 
-func ListNotes() {
+func ListNotes() []string {
+	titles := []string{} // note titles
 	query := `SELECT * FROM notes`
 
 	statement, err := db.Prepare(query)
@@ -57,15 +63,21 @@ func ListNotes() {
 
 	for rows.Next() {
 		var note Note
-		err := rows.Scan(&note.id, &note.content)
+		err := rows.Scan(&note.Id, &note.Name, &note.Content, &note.LastUpdated)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 		log.Println(note)
+
+		// title == "name date"
+		titles = append(titles, note.Name + " " + note.LastUpdated.Format("January 2, 2006 15:04:05"))
 	}
+
+	return titles
 }
 
-func ReadNote(id int) {
+func ReadNote(id int) Note {
+	var note Note
 	query := `SELECT * FROM notes WHERE id = ? LIMIT 1`
 
 	statement, err := db.Prepare(query)
@@ -75,38 +87,63 @@ func ReadNote(id int) {
 	defer statement.Close()
 
 	row := statement.QueryRow(id)
-
-	var note Note
-	err = row.Scan(&note.id, &note.content)
+	err = row.Scan(&note.Id, &note.Name, &note.Content, &note.LastUpdated)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Fatal("Error: User not found")
 		}
 		log.Fatal(err.Error())
 	}
+
 	log.Println(note)
-	// something about nano and write out SQLite3 data into md for nano to read
+	return note
 }
 
-func CreateNote(content string) {
-	query := `INSERT INTO notes (content) VALUES (?)`
-	
+func InsertNote(name string, content string) {
+	query := `INSERT INTO notes (name, content, last_updated) VALUES (?, ?, ?)`
+
 	statement, err := db.Prepare(query)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	result, err := statement.Exec(content)
+	result, err := statement.Exec(name, content, time.Now())
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	log.Println("Note created successfully!", result)
+	log.Println("Note created & saved successfully!", result)
 	// something about nano and open the md for nano to write into, which then saves into SQLite3
 }
 
-func UpdateNote(id int) {
-	query := `INSERT INTO notes ()`
+func UpdateNote(id int, name string, content string) {
+	query := `UPDATE notes SET name = ?, content = ?, last_updated = ? WHERE id = ?`
+
+	statement, err := db.Prepare(query)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	result, err := statement.Exec(name, content, time.Now(), id)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	log.Println("Note updated successfully!", result)
 }
 
-func DeleteNote(id int) {}
+func DeleteNote(id int) {
+	query := `DELETE FROM notes WHERE id = ?`
+
+	statement, err := db.Prepare(query)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	result, err := statement.Exec(id)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	log.Println("Note deleted successfully!", result)
+}
