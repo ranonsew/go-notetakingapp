@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"log"
+	"strconv"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -69,8 +70,8 @@ func ListNotes() []string {
 		}
 		log.Println(note)
 
-		// title == "name date"
-		titles = append(titles, note.Name + " " + note.LastUpdated.Format("January 2, 2006 15:04:05"))
+		// title == "[id] name (date)"
+		titles = append(titles, "[" + strconv.Itoa(note.Id) + "] " + note.Name + " (" + note.LastUpdated.Format("Mon, 02 Jan 2006 15:04:05 +0800") + ")")
 	}
 
 	return titles

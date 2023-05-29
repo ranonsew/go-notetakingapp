@@ -23,10 +23,12 @@ var listCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("list called")
 
-		functions.PromptGetSelect(functions.PromptContent{
+		selected := functions.PromptGetSelect(functions.PromptContent{
 			ErrorMsg: "A note must be selected to continue.",
 			Label: "Select a note to continue",
 		}, db.ListNotes())
+
+		// using selected, grab out the [id] and use the "db" ReadNote() to grab the note to display (this part should take from "functions")
 	},
 }
 
