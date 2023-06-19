@@ -91,7 +91,7 @@ func ReadNote(id int) Note {
 	err = row.Scan(&note.Id, &note.Name, &note.Content, &note.LastUpdated)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Fatal("Error: User not found")
+			log.Fatal("Error: Note not found")
 		}
 		log.Fatal(err.Error())
 	}
