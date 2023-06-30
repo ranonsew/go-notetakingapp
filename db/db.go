@@ -15,12 +15,13 @@ type Note struct {
 	Id int `sql:"id"`
 	Name string `sql:"name"`
 	Content string `sql:"content"`
-}
-
-type NoteRow struct {
-	Note
 	LastUpdated time.Time `sql:"last_updated"`
 }
+
+// type NoteRow struct {
+// 	Note
+// 	LastUpdated time.Time `sql:"last_updated"`
+// }
 
 var db *sql.DB // pointer to sql db instance
 
@@ -34,6 +35,7 @@ func Open() error {
 	return db.Ping() // connection verification
 }
 
+// creating a new "notes" table if it doesn't already exist
 func CreateTable() {
 	query := `CREATE TABLE IF NOT EXISTS notes (
 		id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -50,6 +52,19 @@ func CreateTable() {
 	log.Println("'notes' table created")
 }
 
+// dropping the "notes" table if it exists (for testing or smth idk)
+func DropTable() {
+	query := `DROP TABLE IF EXISTS notes`
+
+	stmt, err := db.Prepare(query)
+	fn.CheckError(err)
+	defer stmt.Close()
+
+	stmt.Exec()
+	log.Println("'notes' table dropped")
+}
+
+// list all available notes
 func ListNotes() []string {
 	titles := []string{} // note titles
 	query := `SELECT * FROM notes`
@@ -64,10 +79,9 @@ func ListNotes() []string {
 
 	for rows.Next() {
 		var note Note
+
 		err := rows.Scan(&note.Id, &note.Name, &note.Content, &note.LastUpdated)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
+		fn.CheckError(err)
 		log.Println(note)
 
 		// title == "[id] name (date)"
@@ -77,6 +91,7 @@ func ListNotes() []string {
 	return titles
 }
 
+// get a single note and display its contents (to be available for editing)
 func ReadNote(id int) Note {
 	var note Note
 	query := `SELECT * FROM notes WHERE id = ? LIMIT 1`
@@ -89,7 +104,7 @@ func ReadNote(id int) Note {
 	err = row.Scan(&note.Id, &note.Name, &note.Content, &note.LastUpdated)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Fatal("Error: Note not found")
+			log.Fatal("Error: Note not found in the database")
 		}
 		log.Fatal(err.Error())
 	}
@@ -98,39 +113,88 @@ func ReadNote(id int) Note {
 	return note
 }
 
+// Insert a new note to the "notes" table
 func InsertNote(name string, content string) {
 	query := `INSERT INTO notes (name, content, last_updated) VALUES (?, ?, ?)`
 
-	statement, err := db.Prepare(query)
+	tx, err := db.Begin()
+	fn.CheckError(err)
+
+	statement, err := tx.Prepare(query)
 	fn.CheckError(err)
 
 	result, err := statement.Exec(name, content, time.Now())
-	fn.CheckError(err)
+	if err != nil {
+		tx.Rollback()
+		log.Fatal(err.Error())
+	}
 
+	err = tx.Commit()
+	fn.CheckError(err)
 	log.Println("Note created & saved successfully!", result)
-	// something about nano and open the md for nano to write into, which then saves into SQLite3
+
+	id, err := result.LastInsertId()
+	fn.CheckError(err)
+	log.Println(id)
+	// here we can run "ReadNote()" to open up the note for us
 }
 
+// to update the note that exists, when edit and save the note, this runs (essentially the save button function)
 func UpdateNote(id int, name string, content string) {
-	query := `UPDATE notes SET name = ?, content = ?, last_updated = ? WHERE id = ?`
+	if name == "" && content == "" {
+		log.Fatal(errors.New("need to update either name, content, or both").Error())
+	}
 
-	statement, err := db.Prepare(query)
+	args := []any{} // arguments allowing for any data type
+	query := `UPDATE notes SET `
+	if name != "" {
+		query += `name = ? `
+		args = append(args, name)
+	}
+	if content != "" {
+		query += `content = ? `
+		args = append(args, content)
+	}
+	query += `last_updated = ? WHERE id = ?`
+	args = append(args, time.Now(), id)
+
+	tx, err := db.Begin()
 	fn.CheckError(err)
 
-	result, err := statement.Exec(name, content, time.Now(), id)
+	stmt, err := tx.Prepare(query)
 	fn.CheckError(err)
+	defer stmt.Close()
 
+	result, err := stmt.Exec(args...)
+	fn.CheckError(err)
+	if err != nil {
+		tx.Rollback()
+		log.Fatal(err.Error())
+	}
+
+	err = tx.Commit()
+	fn.CheckError(err)
 	log.Println("Note updated successfully!", result)
 }
 
+// for deleting a note from the "notes" table
 func DeleteNote(id int) {
 	query := `DELETE FROM notes WHERE id = ?`
 
-	statement, err := db.Prepare(query)
+	tx, err := db.Begin()
 	fn.CheckError(err)
 
-	result, err := statement.Exec(id)
+	stmt, err := tx.Prepare(query)
 	fn.CheckError(err)
+	defer stmt.Close()
 
+	result, err := stmt.Exec(id)
+	if err != nil {
+		tx.Rollback()
+		log.Fatal(err.Error())
+	}
+
+	err = tx.Commit()
+	fn.CheckError(err)
 	log.Println("Note deleted successfully!", result)
 }

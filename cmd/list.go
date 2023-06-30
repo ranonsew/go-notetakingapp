@@ -5,9 +5,11 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
+	"log"
+	"strings"
+	"strconv"
 
-	"github.com/ranonsew/go-notetakingapp/functions"
+	fn "github.com/ranonsew/go-notetakingapp/functions"
 	"github.com/ranonsew/go-notetakingapp/db"
 
 	"github.com/spf13/cobra"
@@ -21,14 +23,19 @@ var listCmd = &cobra.Command{
 	are displayed in the form of a list of notes, 
 	in which the user can then select.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
+		log.Println("list called")
 
-		selected := functions.PromptGetSelect(functions.PromptContent{
+		selectedNote := fn.PromptGetSelect(fn.PromptContent{
 			ErrorMsg: "A note must be selected to continue.",
 			Label: "Select a note to continue",
 		}, db.ListNotes())
 
 		// using selected, grab out the [id] and use the "db" ReadNote() to grab the note to display (this part should take from "functions")
+		// now need to get the thing staring from the second index to one before the fourth index
+		idx := strings.Index(selectedNote, "]") // "[" is always index 0
+		id, err := strconv.Atoi(selectedNote[1:idx]) // from after the "[" to before the "]"
+		fn.CheckError(err)
+		db.ReadNote(id) // open the note that was selected
 	},
 }
 
