@@ -2,17 +2,23 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"strconv"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	fn "github.com/ranonsew/go-notetakingapp/functions"
 )
 
 type Note struct {
 	Id int `sql:"id"`
 	Name string `sql:"name"`
 	Content string `sql:"content"`
+}
+
+type NoteRow struct {
+	Note
 	LastUpdated time.Time `sql:"last_updated"`
 }
 
@@ -37,9 +43,7 @@ func CreateTable() {
 	);`
 
 	statement, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	fn.CheckError(err)
 	defer statement.Close()
 
 	statement.Exec()
@@ -51,15 +55,11 @@ func ListNotes() []string {
 	query := `SELECT * FROM notes`
 
 	statement, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	fn.CheckError(err)
 	defer statement.Close()
 
 	rows, err := statement.Query()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	fn.CheckError(err)
 	defer rows.Close()
 
 	for rows.Next() {
@@ -82,9 +82,7 @@ func ReadNote(id int) Note {
 	query := `SELECT * FROM notes WHERE id = ? LIMIT 1`
 
 	statement, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	fn.CheckError(err)
 	defer statement.Close()
 
 	row := statement.QueryRow(id)
@@ -104,14 +102,10 @@ func InsertNote(name string, content string) {
 	query := `INSERT INTO notes (name, content, last_updated) VALUES (?, ?, ?)`
 
 	statement, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	fn.CheckError(err)
 
 	result, err := statement.Exec(name, content, time.Now())
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	fn.CheckError(err)
 
 	log.Println("Note created & saved successfully!", result)
 	// something about nano and open the md for nano to write into, which then saves into SQLite3
@@ -121,14 +115,10 @@ func UpdateNote(id int, name string, content string) {
 	query := `UPDATE notes SET name = ?, content = ?, last_updated = ? WHERE id = ?`
 
 	statement, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	fn.CheckError(err)
 
 	result, err := statement.Exec(name, content, time.Now(), id)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	fn.CheckError(err)
 
 	log.Println("Note updated successfully!", result)
 }
@@ -137,14 +127,10 @@ func DeleteNote(id int) {
 	query := `DELETE FROM notes WHERE id = ?`
 
 	statement, err := db.Prepare(query)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	fn.CheckError(err)
 
 	result, err := statement.Exec(id)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	fn.CheckError(err)
 
 	log.Println("Note deleted successfully!", result)
 }
